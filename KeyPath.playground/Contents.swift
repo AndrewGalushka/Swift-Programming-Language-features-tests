@@ -5,18 +5,21 @@ import UIKit
 import CoreGraphics
 
 class CoreDataContextObserver {
-    static func observe<SourceType, DestinitionType, V>(source: SourceType,
-                                                        sourceKeyPath: KeyPath<SourceType, V>,
-                                                        destinition: DestinitionType,
-                                                        destinitionKeyPath: ReferenceWritableKeyPath<DestinitionType, V>)
+    // NOTE: Destinition can't be a struct, because ReferenceWritableKeyPath is about reference types only
+    // Probably need to add AnyObject constraint to DestinationType to avoid ambiguous compiler errors while using struct as destination type
+    // struct is only acceptable as readonly instance
+    static func chageValue<SourceType, DestinationType, V>(source: SourceType,
+                                                           sourceKeyPath: KeyPath<SourceType, V>,
+                                                           destination: DestinationType,
+                                                           destinationKeyPath: ReferenceWritableKeyPath<DestinationType, V>)
     {
         
         let sourceValue = source[keyPath: sourceKeyPath]
-        destinition[keyPath: destinitionKeyPath] = sourceValue
+        destination[keyPath: destinationKeyPath] = sourceValue
     }
 }
 
-class SomeModel {
+struct SomeModel {
     var value: Int
     
     init(value: Int = 10) {
@@ -33,13 +36,15 @@ class SomeOtherModel {
 }
 
 func main() {
-    var srcNumber = SomeModel(value: 100)
-    var destNumber = SomeOtherModel()
+    let srcNumber = SomeModel(value: 100)
+    let destNumber = SomeOtherModel()
     print("before: \(destNumber.value)")
-    CoreDataContextObserver.observe(source: srcNumber,
-                                    sourceKeyPath: \SomeModel.value,
-                                    destinition: destNumber,
-                                    destinitionKeyPath: \.value)
+    
+    // NOTE: Destinition can't be a struct, because ReferenceWritableKeyPath is about reference types only
+    CoreDataContextObserver.chageValue(source: srcNumber,
+                                       sourceKeyPath: \SomeModel.value,
+                                       destination: destNumber,
+                                       destinationKeyPath: \.value)
     print("after: \(destNumber.value)")
     print("Main function END")
 }
