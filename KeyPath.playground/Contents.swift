@@ -4,6 +4,14 @@ import CoreData
 import UIKit
 import CoreGraphics
 
+
+/*
+ Sources:
+ https://docs.swift.org/swift-book/ReferenceManual/Expressions.html
+ https://www.swiftbysundell.com/posts/the-power-of-key-paths-in-swift
+ https://www.swiftbysundell.com/posts/the-power-of-key-paths-in-swift
+*/
+
 class CoreDataContextObserver {
     // NOTE: Destinition can't be a struct, because ReferenceWritableKeyPath is about reference types only
     // Probably need to add AnyObject constraint to DestinationType to avoid ambiguous compiler errors while using struct as destination type
