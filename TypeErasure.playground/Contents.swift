@@ -32,6 +32,45 @@ class AnySessionManageable<T: SessionManageable>: SessionManageable {
     }
 }
 
+protocol Printable {
+    associatedtype InternalType
+    
+    func print()
+}
+
+class IntPrinter: Printable {
+    typealias InternalType = Int
+    
+    func print() {
+        Swift.print(10)
+    }
+}
+
+class StringPrinter: Printable {
+    typealias InternalType = String
+    
+    func print() {
+        Swift.print("String")
+    }
+}
+
+class AnyPrintable: Printable {
+    typealias InternalType = Any
+    private let _print: () -> Void
+    
+    init<U>(_ u: U) where U: Printable {
+        _print = u.print
+    }
+    
+    func print() {
+        _print()
+    }
+}
+
+func printAll(_ array: [AnyPrintable]) {
+    array.forEach { $0.print() }
+}
+
 //class AnyCachable<T>: Cachable {
 //    private let _decode: (_ data: Data) -> T?
 //    private let _encode: () -> Data?
@@ -53,6 +92,7 @@ class AnySessionManageable<T: SessionManageable>: SessionManageable {
 ///----------------------------------------------------------------------
 
 func main() {
+    printAll([AnyPrintable(StringPrinter()), AnyPrintable(IntPrinter())])
 }
 
 
