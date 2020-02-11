@@ -7,7 +7,7 @@ class SingleReceiverBinding<Value> {
     typealias Update = (oldValue: Value, newValue: Value)
     typealias UpdatingClosure = (_ v: Update) -> Void
     
-    private typealias Subscription = (reciever: WeakObjectBox<AnyObject>, update: UpdatingClosure)
+    private typealias Subscription = (receiver: WeakObjectBox<AnyObject>, update: UpdatingClosure)
     private var subscription: Subscription?
     
     var value: Value {
@@ -27,7 +27,7 @@ class SingleReceiverBinding<Value> {
     
     func bind(to reciever: AnyObject, updateHandler: @escaping UpdatingClosure) {
         DispatchQueue.main.async {
-            self.register(Subscription(reciever: WeakObjectBox<AnyObject>(value: reciever),
+            self.register(Subscription(receiver: WeakObjectBox<AnyObject>(value: reciever),
                                        update: updateHandler))
         }
     }
@@ -37,7 +37,7 @@ class SingleReceiverBinding<Value> {
             
             if let subscription = self.subscription {
                 
-                if subscription.reciever.isEpty {
+                if subscription.receiver.isEmpty {
                     self.subscription = nil
                 } else {
                     self.subscription?.update(aboutUpdate)
@@ -59,7 +59,7 @@ private extension SingleReceiverBinding {
             self.value = value
         }
         
-        var isEpty: Bool {
+        var isEmpty: Bool {
             return value == nil
         }
     }

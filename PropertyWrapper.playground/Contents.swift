@@ -3,46 +3,82 @@
 import UIKit
 
 @propertyWrapper
-struct Atomic<Value> {
-    private let queue = DispatchQueue(label: "com.andrewgaluska.atomic")
-    private var value: Value
-
-    init(wrappedValue: Value) {
-        self.value = wrappedValue
-    }
-    
+struct Bindable<Value> where Value: Equatable {
     var wrappedValue: Value {
-        get {
-            return queue.sync { value }
+        didSet {
+            if wrappedValue != oldValue {
+                
+            }
         }
-        set {
-            queue.sync { value = newValue }
+    }
+    
+    var projectedValue: Bindable<Value> {
+        return self
+    }
+    
+    private var notifier = Notifier<AnyObject, Value>()
+    
+    private func notifyIfDifferent(oldValue: Value, newValue: Value) {
+        if oldValue != newValue {
+            notifier.notify(aboutChangedValue: newValue)
         }
     }
     
-    var projectedValue: String {
-        return "projectedValue"
+    func bind(to object: AnyObject, valueChangeClosure: @escaping (Value) -> Void) {
+        notifier.add(subscriber: object, changeHandler: valueChangeClosure)
+    }
+    
+    init(wrappedValue: Value) {
+        self.wrappedValue = wrappedValue
     }
 }
 
-struct Foo: ExpressibleByIntegerLiteral {
-    @Atomic var value: Int
-    
-    init(value: Int) {
-        self.value = value
-    }
-    
-    init(integerLiteral value: Int) {
-        self.value = value
+@propertyWrapper
+class ClassWrapped<Value> {
+    var wrappedValue: Value
+    init(wrappedValue: Value) {
+        self.wrappedValue = wrappedValue
     }
 }
 
-// MARK: - Main -
+class Notifier<Subscriber, Value> where Subscriber: AnyObject {
+    typealias NotificationBlock = (Value) -> Void
+    private var subscribers = NSMapTable<Subscriber, ClassWrapped<NotificationBlock>>.weakToStrongObjects()
 
-func main() {
-    let foo = Foo(value: 10)
-    print(foo.$value)
-    
+    func add(subscriber: Subscriber, changeHandler: @escaping NotificationBlock) {
+        self.subscribers.setObject(ClassWrapped(wrappedValue: changeHandler),
+                                   forKey: subscriber)
+    }
+
+    func remove(subscriber: Subscriber) {
+        self.subscribers.removeObject(forKey: subscriber)
+    }
+
+    func notify(aboutChangedValue value: Value) {
+        self.subscribers.objectEnumerator()?.forEach {
+            ($0 as? ClassWrapped<NotificationBlock>)?.wrappedValue(value)
+        }
+    }
 }
 
-main()
+// MARK: - Usage
+
+class TestViewModel {
+    @Bindable var uploadState: UploadState = UploadState.initial
+    
+    enum UploadState {
+        case initial
+        case inProgress
+        case faulted
+        case succeeded
+    }
+}
+
+class TestCase {
+    func configure(viewModel: TestViewModel) {
+        
+        viewModel.$uploadState.bind(to: self) { (newUploadState) in
+        }
+    }
+}
+
